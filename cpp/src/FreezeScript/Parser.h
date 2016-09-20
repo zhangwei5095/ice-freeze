@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -34,10 +34,10 @@ NodePtr parseExpression(const std::string&, const DataFactoryPtr&, const ErrorRe
 class EvaluateException : public IceUtil::Exception
 {
 public:
-    
+
     EvaluateException(const char*, int, const std::string&);
     virtual ~EvaluateException() throw();
-    virtual std::string ice_name() const;
+    virtual std::string ice_id() const;
     virtual void ice_print(std::ostream&) const;
     virtual EvaluateException* ice_clone() const;
     virtual void ice_throw() const;

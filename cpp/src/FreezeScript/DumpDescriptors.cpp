@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -966,7 +966,7 @@ FreezeScript::IfDescriptor::IfDescriptor(const DescriptorPtr& parent, int line, 
                                          const IceXML::Attributes& attributes) :
     Descriptor(parent, line, factory, errorReporter),
     ExecutableContainerDescriptor(parent, line, factory, errorReporter, attributes, "if")
-   
+
 {
     DescriptorErrorContext ctx(_errorReporter, "if", _line);
 
@@ -1013,7 +1013,7 @@ FreezeScript::IterateDescriptor::IterateDescriptor(const DescriptorPtr& parent, 
                                                    const IceXML::Attributes& attributes) :
     Descriptor(parent, line, factory, errorReporter),
     ExecutableContainerDescriptor(parent, line, factory, errorReporter, attributes, "iterate")
-  
+
 {
     DescriptorErrorContext ctx(_errorReporter, "iterate", _line);
 
@@ -1156,7 +1156,7 @@ FreezeScript::DumpDescriptor::DumpDescriptor(const DescriptorPtr& parent, int li
                                              const Slice::UnitPtr& unit) :
     Descriptor(parent, line, factory, errorReporter),
     ExecutableContainerDescriptor(parent, line, factory, errorReporter, attributes, "dump"),
-    _base(true), 
+    _base(true),
     _contents(true)
 {
     DescriptorErrorContext ctx(_errorReporter, "dump", _line);
@@ -1237,11 +1237,11 @@ FreezeScript::RecordDescriptor::RecordDescriptor(const DescriptorPtr& parent, in
                                                  const ErrorReporterPtr& errorReporter,
                                                  const IceXML::Attributes& attributes,
                                                  const Slice::UnitPtr& unit,
-                                                 const FreezeScript::ObjectFactoryPtr& objectFactory) :
-    Descriptor(parent, line, factory, errorReporter), 
+                                                 const FreezeScript::ValueFactoryPtr& valueFactory) :
+    Descriptor(parent, line, factory, errorReporter),
     ExecutableContainerDescriptor(parent, line, factory, errorReporter, attributes, "record"),
     _unit(unit),
-    _objectFactory(objectFactory)
+    _valueFactory(valueFactory)
 {
 }
 
@@ -1251,7 +1251,7 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/, ExecuteIn
     //
     // Temporarily add an object factory.
     //
-    _objectFactory->activate(_factory, _unit);
+    _valueFactory->activate(_factory, _unit);
 
     //
     // Iterate over the database.
@@ -1266,13 +1266,15 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/, ExecuteIn
             Ice::ByteSeq keyBytes;
             keyBytes.resize(dbKey.get_size());
             memcpy(&keyBytes[0], dbKey.get_data(), dbKey.get_size());
-            Ice::InputStreamPtr inKey = Ice::wrapInputStream(info->communicator, keyBytes);
+            Ice::InputStream inKey(info->communicator, keyBytes);
 
             Ice::ByteSeq valueBytes;
             valueBytes.resize(dbValue.get_size());
             memcpy(&valueBytes[0], dbValue.get_data(), dbValue.get_size());
-            Ice::InputStreamPtr inValue = Ice::wrapInputStream(info->communicator, valueBytes);
-            inValue->startEncapsulation();
+            Ice::InputStream inValue(info->communicator, valueBytes);
+            StreamUtil util;
+            inValue.setClosure(&util);
+            inValue.startEncapsulation();
 
             //
             // Create data representations of the key and value types.
@@ -1287,11 +1289,11 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/, ExecuteIn
             //
             // Unmarshal the key and value.
             //
-            keyData->unmarshal(inKey);
-            valueData->unmarshal(inValue);
+            keyData->unmarshal(&inKey);
+            valueData->unmarshal(&inValue);
             if(info->valueType->usesClasses())
             {
-                inValue->readPendingObjects();
+                inValue.readPendingValues();
             }
 
             //
@@ -1320,7 +1322,7 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/, ExecuteIn
         {
             dbc->close();
         }
-        _objectFactory->deactivate();
+        _valueFactory->deactivate();
         throw;
     }
 
@@ -1328,7 +1330,7 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/, ExecuteIn
     {
         dbc->close();
     }
-    _objectFactory->deactivate();
+    _valueFactory->deactivate();
 }
 
 //
@@ -1339,7 +1341,7 @@ FreezeScript::DatabaseDescriptor::DatabaseDescriptor(const DescriptorPtr& parent
                                                      const ErrorReporterPtr& errorReporter,
                                                      const IceXML::Attributes& attributes,
                                                      const Slice::UnitPtr& unit) :
-    Descriptor(parent, line, factory, errorReporter), 
+    Descriptor(parent, line, factory, errorReporter),
     ExecutableContainerDescriptor(parent, line, factory, errorReporter, attributes, "database"),
     _unit(unit)
 {
@@ -1604,6 +1606,7 @@ FreezeScript::SymbolTableI::getConstantValue(const string& name) const
             case Slice::Builtin::KindObject:
             case Slice::Builtin::KindObjectProxy:
             case Slice::Builtin::KindLocalObject:
+            case Slice::Builtin::KindValue:
                 assert(false);
             }
         }

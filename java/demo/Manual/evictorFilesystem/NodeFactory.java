@@ -1,12 +1,12 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
 import Filesystem.*;
 
-public class NodeFactory implements Ice.ObjectFactory
+public class NodeFactory implements Ice.ValueFactory
 {
     @Override
     public Ice.Object
@@ -25,11 +25,5 @@ public class NodeFactory implements Ice.ObjectFactory
             assert(false);
             return null;
         }
-    }
-
-    @Override
-    public void
-    destroy()
-    {
     }
 }

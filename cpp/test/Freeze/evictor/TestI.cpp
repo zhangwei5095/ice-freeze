@@ -1,9 +1,10 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
+#include <Ice/Ice.h>
 #include <Freeze/Freeze.h>
 #include <TestI.h>
 #include <TestCommon.h>
@@ -519,7 +520,7 @@ Test::RemoteEvictorI::RemoteEvictorI(const CommunicatorPtr& communicator, const 
     _envName(envName),
     _category(category)
 {
-    _evictorAdapter = communicator->createObjectAdapterWithEndpoints(IceUtil::generateUUID(), "default");
+    _evictorAdapter = communicator->createObjectAdapterWithEndpoints(Ice::generateUUID(), "default");
  
     Initializer* initializer = new Initializer;
     
@@ -598,7 +599,7 @@ void
 Test::RemoteEvictorI::deactivate(const Current& current)
 {
     _evictorAdapter->destroy();
-    current.adapter->remove(current.adapter->getCommunicator()->stringToIdentity(_category));
+    current.adapter->remove(Ice::stringToIdentity(_category));
 }
 
 
@@ -628,7 +629,7 @@ Test::RemoteEvictorFactoryI::createEvictor(const string& name, bool transactiona
     RemoteEvictorIPtr remoteEvictor = 
         new RemoteEvictorI(current.adapter->getCommunicator(), _envName, name, transactional);  
     return RemoteEvictorPrx::uncheckedCast(
-        current.adapter->add(remoteEvictor, current.adapter->getCommunicator()->stringToIdentity(name)));
+        current.adapter->add(remoteEvictor, Ice::stringToIdentity(name)));
 }
 
 void

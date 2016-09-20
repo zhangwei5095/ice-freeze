@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -79,8 +79,8 @@ public:
     virtual Slice::TypePtr getType() const = 0;
     virtual void destroy() = 0;
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const = 0;
-    virtual void unmarshal(const Ice::InputStreamPtr&) = 0;
+    virtual void marshal(Ice::OutputStream*) const = 0;
+    virtual void unmarshal(Ice::InputStream*) = 0;
 
     virtual bool booleanValue(bool = false) const = 0;
     virtual Ice::Long integerValue(bool = false) const = 0;
@@ -128,8 +128,8 @@ public:
 
     virtual Slice::TypePtr getType() const;
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -164,8 +164,8 @@ public:
 
     virtual Slice::TypePtr getType() const;
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -203,8 +203,8 @@ public:
 
     virtual Slice::TypePtr getType() const;
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -241,8 +241,8 @@ public:
 
     virtual Slice::TypePtr getType() const;
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -283,8 +283,8 @@ public:
     virtual Slice::TypePtr getType() const;
     virtual void destroy();
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -324,8 +324,8 @@ public:
 
     virtual Slice::TypePtr getType() const;
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual void destroy();
 
@@ -366,8 +366,8 @@ public:
     virtual Slice::TypePtr getType() const;
     virtual void destroy();
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -409,8 +409,8 @@ public:
     virtual Slice::TypePtr getType() const;
     virtual void destroy();
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -451,8 +451,8 @@ public:
     virtual Slice::TypePtr getType() const;
     virtual void destroy();
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -493,8 +493,8 @@ public:
     virtual Slice::TypePtr getType() const;
     virtual void destroy();
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -543,8 +543,8 @@ public:
     virtual Slice::TypePtr getType() const;
     virtual void destroy();
 
-    virtual void marshal(const Ice::OutputStreamPtr&) const;
-    virtual void unmarshal(const Ice::InputStreamPtr&);
+    virtual void marshal(Ice::OutputStream*) const;
+    virtual void unmarshal(Ice::InputStream*);
 
     virtual bool booleanValue(bool = false) const;
     virtual Ice::Long integerValue(bool = false) const;
@@ -566,12 +566,43 @@ private:
 };
 typedef IceUtil::Handle<ObjectRef> ObjectRefPtr;
 
-class ObjectFactory : public Ice::ObjectFactory
+class ReadObjectCallback : public IceUtil::Shared
+{
+public:
+
+    ReadObjectCallback(const ObjectRefPtr&);
+
+    virtual void invoke(const Ice::ObjectPtr&);
+
+private:
+
+    ObjectRefPtr _ref;
+};
+typedef IceUtil::Handle<ReadObjectCallback> ReadObjectCallbackPtr;
+
+//
+// This class assists during unmarshaling of Slice classes.
+// We attach an instance to a stream.
+//
+class StreamUtil
+{
+public:
+
+    void add(const ReadObjectCallbackPtr& cb)
+    {
+        _callbacks.push_back(cb);
+    }
+
+private:
+
+    std::vector<ReadObjectCallbackPtr> _callbacks;
+};
+
+class ValueFactory : public Ice::ValueFactory
 {
 public:
 
     virtual Ice::ObjectPtr create(const std::string&);
-    virtual void destroy();
 
     void activate(const DataFactoryPtr&, const Slice::UnitPtr&);
     void deactivate();
@@ -581,7 +612,7 @@ private:
     DataFactoryPtr _factory;
     Slice::UnitPtr _unit;
 };
-typedef IceUtil::Handle<ObjectFactory> ObjectFactoryPtr;
+typedef IceUtil::Handle<ValueFactory> ValueFactoryPtr;
 
 class ClassNotFoundException
 {

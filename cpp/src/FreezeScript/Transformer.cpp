@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -57,7 +57,7 @@ struct TransformInfoI : public TransformInfo
     virtual ObjectDataMap& getObjectDataMap();
 
     Ice::CommunicatorPtr communicator;
-    FreezeScript::ObjectFactoryPtr objectFactory;
+    FreezeScript::ValueFactoryPtr valueFactory;
     Slice::UnitPtr oldUnit;
     Slice::UnitPtr newUnit;
     Db* oldDb;
@@ -1885,7 +1885,7 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/)
     //
     // Temporarily add an object factory.
     //
-    _info->objectFactory->activate(_info->factory, _info->oldUnit);
+    _info->valueFactory->activate(_info->factory, _info->oldUnit);
 
     //
     // Iterate over the database.
@@ -1940,7 +1940,7 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/)
         {
             dbc->close();
         }
-        _info->objectFactory->deactivate();
+        _info->valueFactory->deactivate();
         throw;
     }
 
@@ -1948,7 +1948,7 @@ FreezeScript::RecordDescriptor::execute(const SymbolTablePtr& /*sym*/)
     {
         dbc->close();
     }
-    _info->objectFactory->deactivate();
+    _info->valueFactory->deactivate();
 }
 
 void
@@ -1957,13 +1957,15 @@ FreezeScript::RecordDescriptor::transformRecord(const Ice::ByteSeq& inKeyBytes,
                                                 Ice::ByteSeq& outKeyBytes,
                                                 Ice::ByteSeq& outValueBytes)
 {
-    Ice::InputStreamPtr inKey = Ice::wrapInputStream(_info->communicator, inKeyBytes);
-    Ice::InputStreamPtr inValue = Ice::wrapInputStream(_info->communicator, inValueBytes);
-    inValue->startEncapsulation();
+    Ice::InputStream inKey(_info->communicator, inKeyBytes);
+    Ice::InputStream inValue(_info->communicator, inValueBytes);
+    StreamUtil util;
+    inValue.setClosure(&util);
+    inValue.startEncapsulation();
 
-    Ice::OutputStreamPtr outKey = Ice::createOutputStream(_info->communicator);
-    Ice::OutputStreamPtr outValue = Ice::createOutputStream(_info->communicator);
-    outValue->startEncapsulation();
+    Ice::OutputStream outKey(_info->communicator);
+    Ice::OutputStream outValue(_info->communicator);
+    outValue.startEncapsulation();
 
     //
     // Create data representations of the old key and value types.
@@ -1977,12 +1979,12 @@ FreezeScript::RecordDescriptor::transformRecord(const Ice::ByteSeq& inKeyBytes,
     //
     // Unmarshal the old key and value.
     //
-    oldKeyData->unmarshal(inKey);
-    oldValueData->unmarshal(inValue);
+    oldKeyData->unmarshal(&inKey);
+    oldValueData->unmarshal(&inValue);
     _info->objectDataMap.clear();
     if(_info->oldValueType->usesClasses())
     {
-        inValue->readPendingObjects();
+        inValue.readPendingValues();
         ObjectVisitor visitor(_info->objectDataMap);
         oldValueData->visit(visitor);
     }
@@ -2022,17 +2024,17 @@ FreezeScript::RecordDescriptor::transformRecord(const Ice::ByteSeq& inKeyBytes,
         ExecutableContainerDescriptor::execute(st);
     }
 
-    newKeyData->marshal(outKey);
-    newValueData->marshal(outValue);
+    newKeyData->marshal(&outKey);
+    newValueData->marshal(&outValue);
 
-    outKey->finished(outKeyBytes);
+    outKey.finished(outKeyBytes);
 
     if(_info->newValueType->usesClasses())
     {
-        outValue->writePendingObjects();
+        outValue.writePendingValues();
     }
-    outValue->endEncapsulation();
-    outValue->finished(outValueBytes);
+    outValue.endEncapsulation();
+    outValue.finished(outValueBytes);
 }
 
 //
@@ -2138,7 +2140,7 @@ FreezeScript::DatabaseDescriptor::execute(const SymbolTablePtr& st)
         Freeze::Catalog catalog(_info->connection, Freeze::catalogName());
         Freeze::CatalogData catalogData;
         catalogData.evictor = false;
-        catalogData.key = _info->newKeyType->typeId(); 
+        catalogData.key = _info->newKeyType->typeId();
         catalogData.value = _info->newValueType->typeId();
         catalog.put(Freeze::Catalog::value_type(_info->newDbName, catalogData));
     }
@@ -2413,6 +2415,7 @@ FreezeScript::SymbolTableI::getConstantValue(const string& name) const
             case Slice::Builtin::KindObject:
             case Slice::Builtin::KindObjectProxy:
             case Slice::Builtin::KindLocalObject:
+            case Slice::Builtin::KindValue:
                 assert(false);
             }
         }
@@ -3003,7 +3006,7 @@ FreezeScript::assignOrTransform(const DataPtr& dest, const DataPtr& src, bool co
 
 void
 FreezeScript::transformDatabase(const Ice::CommunicatorPtr& communicator,
-                                const FreezeScript::ObjectFactoryPtr& objectFactory,
+                                const FreezeScript::ValueFactoryPtr& valueFactory,
                                 const Slice::UnitPtr& oldUnit, const Slice::UnitPtr& newUnit,
                                 Db* oldDb, Db* newDb, DbTxn* newDbTxn, const Freeze::ConnectionPtr& connection,
                                 const string& newDbName, const string& facetName, bool purgeObjects, ostream& errors,
@@ -3012,7 +3015,7 @@ FreezeScript::transformDatabase(const Ice::CommunicatorPtr& communicator,
 
     TransformInfoIPtr info = new TransformInfoI;
     info->communicator = communicator;
-    info->objectFactory = objectFactory;
+    info->valueFactory = valueFactory;
     info->oldUnit = oldUnit;
     info->newUnit = newUnit;
     info->oldDb = oldDb;

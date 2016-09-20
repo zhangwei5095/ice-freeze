@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -23,13 +23,4 @@ BookFactory::create(const string&)
     assert(_library);
     assert(type == "::Demo::Book");
     return new BookI(_library);
-}
-
-void
-BookFactory::destroy()
-{
-    //
-    // Break cyclic object dependencies
-    //
-    _library = 0;
 }

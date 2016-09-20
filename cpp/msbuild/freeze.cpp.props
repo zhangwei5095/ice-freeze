@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0"
+         xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+
+    <!-- TODO: add support for building tests and demos against a
+    Ice+Freeze binary distribution -->
+
+    <PropertyGroup>
+        <Ice_BuildingSrc>yes</Ice_BuildingSrc>
+        <Ice_CppMapping>cpp98</Ice_CppMapping>
+    </PropertyGroup>
+
+    <Import Project="$(MSBuildThisFileDirectory)\..\..\ice\cpp\msbuild\ice.cpp.props" />
+
+    <!-- If we are building the Freeze source distribution or if UseBinDist was not set to
+         yes, set FreezeHome to point to this Freeze source distribution -->
+
+    <PropertyGroup Condition="'$(UseBinDist)' != 'yes' or '$(Ice_BuildingSrc)' == yes">
+        <FreezeHome>$(MSBuildThisFileDirectory)..\..</FreezeHome>
+        <FreezeToolsPath>$(FreezeHome)\cpp\bin\$(Platform)\$(Configuration)</FreezeToolsPath>
+    </PropertyGroup>
+
+    <!-- Define some common properties -->
+    <PropertyGroup>
+        <Freeze_SrcRootDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)\..'))</Freeze_SrcRootDir>
+        <OutDir>$(Freeze_SrcRootDir)\bin\$(Platform)\$(Configuration)\</OutDir>
+    </PropertyGroup>
+
+    <ItemDefinitionGroup Condition="'$(Ice_BuildingSrc)' == 'yes'">
+        <ClCompile>
+            <AdditionalIncludeDirectories>$(Freeze_SrcRootDir)\include\generated\$(Platform)\$(Ice_Configuration);
+                                          $(Freeze_SrcRootDir)\include;$(Freeze_SrcRootDir)\src;
+                                          %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        </ClCompile>
+        <Link>
+            <AdditionalLibraryDirectories>$(Freeze_SrcRootDir)\lib\$(Platform)\$(Ice_Configuration)</AdditionalLibraryDirectories>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <ItemDefinitionGroup Condition="'$(ConfigurationType)|$(Ice_BuildingSrc)' == 'DynamicLibrary|yes'">
+        <Link>
+            <ImportLibrary>$(Freeze_SrcRootDir)\lib\$(Platform)\$(Ice_Configuration)\$(TargetName).lib</ImportLibrary>
+        </Link>
+    </ItemDefinitionGroup>
+
+</Project>

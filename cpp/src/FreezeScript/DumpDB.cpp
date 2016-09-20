@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -12,6 +12,7 @@
 #include <IceUtil/OutputUtil.h>
 #include <IceUtil/Options.h>
 #include <IceUtil/FileUtil.h>
+#include <fstream>
 #include <db_cxx.h>
 #include <sys/stat.h>
 #include <algorithm>
@@ -54,7 +55,7 @@ class DescriptorHandler : public IceXML::Handler
 public:
 
     DescriptorHandler(const DataFactoryPtr&, const Slice::UnitPtr&, const ErrorReporterPtr&,
-                      const FreezeScript::ObjectFactoryPtr&);
+                      const FreezeScript::ValueFactoryPtr&);
 
     virtual void startElement(const std::string&, const IceXML::Attributes&, int, int);
     virtual void endElement(const std::string&, int, int);
@@ -70,7 +71,7 @@ private:
     ErrorReporterPtr _errorReporter;
     DescriptorPtr _current;
     DumpDBDescriptorPtr _descriptor;
-    FreezeScript::ObjectFactoryPtr _objectFactory;
+    FreezeScript::ValueFactoryPtr _valueFactory;
 };
 
 }
@@ -449,7 +450,7 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
 
         if(!outputFile.empty())
         {
-            IceUtilInternal::ofstream of(outputFile);
+            ofstream of(IceUtilInternal::streamFilename(outputFile).c_str());
             if(!of.good())
             {
                 cerr << appName << ": unable to open file `" << outputFile << "'" << endl;
@@ -462,7 +463,7 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
     }
     else
     {
-        IceUtilInternal::ifstream in(inputFile);
+        ifstream in(IceUtilInternal::streamFilename(inputFile).c_str());
         char buff[1024];
         while(true)
         {
@@ -475,8 +476,8 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
         }
         in.close();
     }
-    FreezeScript::ObjectFactoryPtr objectFactory = new FreezeScript::ObjectFactory;
-    communicator->addObjectFactory(objectFactory, "");
+    FreezeScript::ValueFactoryPtr valueFactory = new FreezeScript::ValueFactory;
+    communicator->getValueFactoryManager()->add(valueFactory, "");
 
     DbEnv dbEnv(0);
     DbTxn* txn = 0;
@@ -511,7 +512,7 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
         try
         {
             FreezeScript::DataFactoryPtr factory = new FreezeScript::DataFactory(communicator, unit, errorReporter);
-            FreezeScript::DescriptorHandler dh(factory, unit, errorReporter, objectFactory);
+            FreezeScript::DescriptorHandler dh(factory, unit, errorReporter, valueFactory);
 
             istringstream istr(descriptors);
             IceXML::Parser::parse(istr, dh);
@@ -820,8 +821,8 @@ FreezeScript::SliceVisitor::visitEnum(const Slice::EnumPtr& v)
 //
 FreezeScript::DescriptorHandler::DescriptorHandler(const DataFactoryPtr& factory, const Slice::UnitPtr& unit,
                                                    const ErrorReporterPtr& errorReporter,
-                                                   const FreezeScript::ObjectFactoryPtr& objectFactory) :
-    _factory(factory), _unit(unit), _errorReporter(errorReporter), _objectFactory(objectFactory)
+                                                   const FreezeScript::ValueFactoryPtr& valueFactory) :
+    _factory(factory), _unit(unit), _errorReporter(errorReporter), _valueFactory(valueFactory)
 {
 }
 
@@ -857,7 +858,7 @@ FreezeScript::DescriptorHandler::startElement(const string& name, const IceXML::
             _errorReporter->descriptorError("<record> must be a child of <database>", line);
         }
 
-        d = new RecordDescriptor(_current, line, _factory, _errorReporter, attributes, _unit, _objectFactory);
+        d = new RecordDescriptor(_current, line, _factory, _errorReporter, attributes, _unit, _valueFactory);
     }
     else if(name == "dump")
     {

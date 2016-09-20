@@ -1,12 +1,12 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
 #include <FreezeScript/Functions.h>
 #include <FreezeScript/Util.h>
-#include <IceUtil/UUID.h>
+#include <Ice/UUID.h>
 #include <IceUtil/StringUtil.h>
 
 using namespace std;
@@ -34,7 +34,7 @@ FreezeScript::invokeGlobalFunction(const Ice::CommunicatorPtr& communicator, con
         {
             errorReporter->error("generateUUID() accepts no arguments");
         }
-        result = factory->createString(IceUtil::generateUUID(), false);
+        result = factory->createString(Ice::generateUUID(), false);
         return true;
     }
     else if(name == "stringToIdentity")
@@ -56,7 +56,7 @@ FreezeScript::invokeGlobalFunction(const Ice::CommunicatorPtr& communicator, con
         Ice::Identity id;
         try
         {
-            id = communicator->stringToIdentity(idstr);
+            id = Ice::stringToIdentity(idstr);
         }
         catch(const Ice::IdentityParseException& ex)
         {
@@ -113,7 +113,7 @@ FreezeScript::invokeGlobalFunction(const Ice::CommunicatorPtr& communicator, con
         assert(member);
         id.category = member->stringValue();
 
-        result = factory->createString(communicator->identityToString(id), false);
+        result = factory->createString(Ice::identityToString(id), false);
         return true;
     }
     else if(name == "stringToProxy")

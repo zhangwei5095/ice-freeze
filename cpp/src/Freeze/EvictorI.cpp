@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -12,7 +12,7 @@
 
 #include <IceUtil/IceUtil.h>
 
-#include <IceUtil/StringConverter.h>
+#include <Ice/StringConverter.h>
 
 #include <typeinfo>
 
@@ -230,7 +230,7 @@ Freeze::EvictorIBase::locate(const Current& current, LocalObjectPtr& cookie)
             if(_trace >= 3)
             {
                 Trace out(_communicator->getLogger(), "Freeze.Evictor");
-                out << "ice_ping found \"" << _communicator->identityToString(current.id)
+                out << "ice_ping found \"" << Ice::identityToString(current.id)
                     << "\" with facet \"" << current.facet + "\"";
             }
 
@@ -242,7 +242,7 @@ Freeze::EvictorIBase::locate(const Current& current, LocalObjectPtr& cookie)
             if(_trace >= 3)
             {
                 Trace out(_communicator->getLogger(), "Freeze.Evictor");
-                out << "ice_ping raises FacetNotExistException for \"" << _communicator->identityToString(current.id)
+                out << "ice_ping raises FacetNotExistException for \"" << Ice::identityToString(current.id)
                     << "\" with facet \"" << current.facet + "\"";
             }
             throw FacetNotExistException(__FILE__, __LINE__);
@@ -253,7 +253,7 @@ Freeze::EvictorIBase::locate(const Current& current, LocalObjectPtr& cookie)
             {
                 Trace out(_communicator->getLogger(), "Freeze.Evictor");
                 out << "ice_ping will raise ObjectNotExistException for \""
-                    << _communicator->identityToString(current.id)  << "\" with facet \"" << current.facet + "\"";
+                    << Ice::identityToString(current.id)  << "\" with facet \"" << current.facet + "\"";
             }
             return 0;
         }
@@ -316,7 +316,7 @@ Freeze::EvictorIBase::allDbs() const
         //
         // Berkeley DB expects file paths to be UTF8 encoded.
         //
-        db.open(0, nativeToUTF8(_filename, IceUtil::getProcessStringConverter()).c_str(), 0, DB_UNKNOWN,
+        db.open(0, nativeToUTF8(_filename, getProcessStringConverter()).c_str(), 0, DB_UNKNOWN,
                 DB_RDONLY, 0);
 
         Dbc* dbc = 0;

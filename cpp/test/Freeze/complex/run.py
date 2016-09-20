@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # **********************************************************************
 #
-# Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+# Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 #
 # **********************************************************************
 
 import os, sys
 
-path = [ ".", "..", "../..", "../../..", "../../../.." ]
+path = [ ".", "..", "../..", "../../..", "../../../.."]
+
 head = os.path.dirname(sys.argv[0])
 if len(head) > 0:
     path = [os.path.join(head, p) for p in path]
-path = [os.path.abspath(p) for p in path if os.path.exists(os.path.join(p, "scripts", "TestUtil.py")) ]
+path = [os.path.abspath(p) for p in path if os.path.exists(os.path.join(p, "scripts", "FreezeTestUtil.py")) ]
 if len(path) == 0:
     raise RuntimeError("can't find toplevel directory!")
 sys.path.append(os.path.join(path[0], "scripts"))
-import TestUtil
+
+import FreezeTestUtil as TestUtil
 
 testdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,7 +27,7 @@ testdir = os.path.dirname(os.path.abspath(__file__))
 dbdir = os.path.join(os.getcwd(), "db")
 TestUtil.cleanDbDir(dbdir)
 
-client = os.path.join(os.getcwd(), "client")
+client = os.path.join(os.getcwd(), TestUtil.getTestExecutable("client"))
 
 if TestUtil.appverifier:
     TestUtil.setAppVerifierSettings([client])

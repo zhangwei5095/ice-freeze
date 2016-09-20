@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -28,7 +28,7 @@ sequence<byte> Key;
  * A database value, represented as a sequence of bytes.
  *
  **/
-sequence<byte> Value;
+sequence<byte> \Value;
 
 };
 

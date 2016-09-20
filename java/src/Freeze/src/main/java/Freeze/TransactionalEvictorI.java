@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -94,7 +94,7 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
             {
                 Ice.AlreadyRegisteredException ex = new Ice.AlreadyRegisteredException();
                 ex.kindOfObject = "servant";
-                ex.id = _communicator.identityToString(ident);
+                ex.id = Ice.Util.identityToString(ident);
                 if(facet.length() > 0)
                 {
                     ex.id += " -f " + IceUtilInternal.StringUtil.escapeString(facet, "");
@@ -104,7 +104,7 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
 
             if(_trace >= 1)
             {
-                String objString = "object \"" + _communicator.identityToString(ident) + "\"";
+                String objString = "object \"" + Ice.Util.identityToString(ident) + "\"";
                 if(!facet.equals(""))
                 {
                     objString += " with facet \"" + facet + "\"";
@@ -182,7 +182,7 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
             {
                 Ice.NotRegisteredException ex = new Ice.NotRegisteredException();
                 ex.kindOfObject = "servant";
-                ex.id = _communicator.identityToString(ident);
+                ex.id = Ice.Util.identityToString(ident);
                 if(facet.length() > 0)
                 {
                     ex.id += " -f " + IceUtilInternal.StringUtil.escapeString(facet, "");
@@ -192,7 +192,7 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
 
             if(_trace >= 1)
             {
-                String objString = "object \"" + _communicator.identityToString(ident) + "\"";
+                String objString = "object \"" + Ice.Util.identityToString(ident) + "\"";
                 if(!facet.equals(""))
                 {
                     objString += " with facet \"" + facet + "\"";
@@ -309,8 +309,8 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
     //
     // The interceptor dispatch call
     //
-    Ice.DispatchStatus
-    dispatch(Ice.Request request)
+    boolean
+    dispatch(Ice.Request request) throws Ice.UserException
     {
         _deactivateController.lock();
         try
@@ -482,16 +482,12 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
 
                                 try
                                 {
-                                    Ice.DispatchStatus dispatchStatus = sh.servant().ice_dispatch(request, ctx);
-                                    if(dispatchStatus == Ice.DispatchStatus.DispatchUserException &&
-                                       _rollbackOnUserException)
-                                    {
-                                        ctx.rollback();
-                                    }
-                                    if(dispatchStatus == Ice.DispatchStatus.DispatchAsync)
+                                    boolean dispatchAsync = sh.servant().ice_dispatch(request, ctx);
+                                    
+                                    if(dispatchAsync)
                                     {
                                         //
-                                        // Can throw DeadlockException or TransactionalEvictorDeadlockException
+                                        // May throw DeadlockException or TransactionalEvictorDeadlockException
                                         //
                                         ctx.checkDeadlockException();
 
@@ -500,7 +496,15 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
                                             ctx.rollback();
                                         }
                                     }
-                                    return dispatchStatus;
+                                    return dispatchAsync;
+                                }
+                                catch(Ice.UserException ex)
+                                {
+                                    if(_rollbackOnUserException)
+                                    {
+                                        ctx.rollback();
+                                    }
+                                    throw ex;
                                 }
                                 catch(RuntimeException ex)
                                 {
@@ -701,7 +705,7 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
         if(_trace >= 2)
         {
             _communicator.getLogger().trace("Freeze.Evictor", "could not find \"" +
-                                            _communicator.identityToString(current.id) + "\" with facet \"" +
+                                            Ice.Util.identityToString(current.id) + "\" with facet \"" +
                                             current.facet + "\"");
         }
 
@@ -747,7 +751,7 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
                 if(_trace >= 3)
                 {
                     _communicator.getLogger().trace("Freeze.Evictor", "loaded \""
-                                                    + _communicator.identityToString(ident) + "\" with facet \"" +
+                                                    + Ice.Util.identityToString(ident) + "\" with facet \"" +
                                                     store.facet() + "\" into the cache");
                 }
                 return element.servant;
@@ -840,8 +844,8 @@ class TransactionalEvictorI extends EvictorI implements TransactionalEvictor
     private Ice.DispatchInterceptor _interceptor = new Ice.DispatchInterceptor()
     {
         @Override
-        public Ice.DispatchStatus
-        dispatch(Ice.Request request)
+        public boolean
+        dispatch(Ice.Request request) throws Ice.UserException
         {
             return TransactionalEvictorI.this.dispatch(request);
         }

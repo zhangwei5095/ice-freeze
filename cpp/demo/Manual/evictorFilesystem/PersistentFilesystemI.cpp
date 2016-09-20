@@ -1,10 +1,11 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
 #include <PersistentFilesystemI.h>
+#include <Ice/Ice.h>
 
 using namespace std;
 
@@ -182,7 +183,7 @@ Filesystem::DirectoryI::createDirectory(const string& nm, const Ice::Current& c)
     }
 
     Ice::Identity id;
-    id.name = IceUtil::generateUUID();
+    id.name = Ice::generateUUID();
     PersistentDirectoryPtr dir = new DirectoryI;
     dir->nodeName = nm;
     dir->parent = PersistentDirectoryPrx::uncheckedCast(c.adapter->createProxy(c.id));
@@ -213,7 +214,7 @@ Filesystem::DirectoryI::createFile(const string& nm, const Ice::Current& c)
     }
 
     Ice::Identity id;
-    id.name = IceUtil::generateUUID();
+    id.name = Ice::generateUUID();
     PersistentFilePtr file = new FileI;
     file->nodeName = nm;
     file->parent = PersistentDirectoryPrx::uncheckedCast(c.adapter->createProxy(c.id));
@@ -257,9 +258,4 @@ Filesystem::NodeFactory::create(const string& type)
         assert(false);
         return 0;
     }
-}
-
-void
-Filesystem::NodeFactory::destroy()
-{
 }

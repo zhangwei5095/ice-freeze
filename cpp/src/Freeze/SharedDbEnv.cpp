@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -17,7 +17,7 @@
 #include <IceUtil/StringUtil.h>
 #include <IceUtil/IceUtil.h>
 
-#include <IceUtil/StringConverter.h>
+#include <Ice/StringConverter.h>
 
 #include <cstdlib>
 

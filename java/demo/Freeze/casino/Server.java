@@ -1,14 +1,14 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
 class Server extends Ice.Application
 {
-    static class ObjectFactory implements Ice.ObjectFactory
+    static class ValueFactory implements Ice.ValueFactory
     {
-        ObjectFactory(Class<?> factoryClass)
+        ValueFactory(Class<?> factoryClass)
         {
             _factoryClass = factoryClass;
         }
@@ -29,12 +29,6 @@ class Server extends Ice.Application
             {
                 throw new Ice.InitializationException(ex.toString());
             }
-        }
-
-        @Override
-        public void
-        destroy()
-        {
         }
 
         private Class<?> _factoryClass;
@@ -75,9 +69,12 @@ class Server extends Ice.Application
         //
         // Register factories
         //
-        communicator().addObjectFactory(new ObjectFactory(BankI.class), CasinoStore.PersistentBank.ice_staticId());
-        communicator().addObjectFactory(new ObjectFactory(PlayerI.class), CasinoStore.PersistentPlayer.ice_staticId());
-        communicator().addObjectFactory(new ObjectFactory(BetI.class), CasinoStore.PersistentBet.ice_staticId());
+        communicator().getValueFactoryManager().add(new ValueFactory(BankI.class),
+                                                    CasinoStore.PersistentBank.ice_staticId());
+        communicator().getValueFactoryManager().add(new ValueFactory(PlayerI.class),
+                                                    CasinoStore.PersistentPlayer.ice_staticId());
+        communicator().getValueFactoryManager().add(new ValueFactory(BetI.class),
+                                                    CasinoStore.PersistentBet.ice_staticId());
 
         //
         // Create evictors; each type gets its own type-specific evictor
@@ -191,7 +188,7 @@ class Server extends Ice.Application
             // reload existing bets into the bet resolver
             //
             _bankPrx.reloadBets();
-            
+
             //
             // Create players / recreate missing players using a transaction
             // (the transaction is not really necessary here, but a good demo)
@@ -200,7 +197,7 @@ class Server extends Ice.Application
             String[] players =
                 { "al", "bob", "charlie", "dave", "ed", "fred", "gene", "herb", "irvin", "joe", "ken", "lance" };
 
-            
+
             Freeze.Connection connection = Freeze.Util.createConnection(communicator(), _envName);
             Freeze.Transaction tx = connection.beginTransaction();
 
@@ -218,7 +215,7 @@ class Server extends Ice.Application
             tx.commit();
             assert(_playerEvictor.getCurrentTransaction() == null);
             connection.close();
-            
+
 
             //
             // Everything is ready, activate

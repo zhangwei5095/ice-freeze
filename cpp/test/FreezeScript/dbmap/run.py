@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # **********************************************************************
 #
-# Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+# Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 #
 # **********************************************************************
 
@@ -11,13 +11,13 @@ path = [ ".", "..", "../..", "../../..", "../../../.." ]
 head = os.path.dirname(sys.argv[0])
 if len(head) > 0:
     path = [os.path.join(head, p) for p in path]
-path = [os.path.abspath(p) for p in path if os.path.exists(os.path.join(p, "scripts", "TestUtil.py")) ]
+path = [os.path.abspath(p) for p in path if os.path.exists(os.path.join(p, "scripts", "FreezeTestUtil.py")) ]
 if len(path) == 0:
     raise RuntimeError("can't find toplevel directory!")
 sys.path.append(os.path.join(path[0], "scripts"))
-import TestUtil
+import FreezeTestUtil as TestUtil
 
-transformdb = '%s' % os.path.join("..", "..", "..", "bin", "transformdb") 
+transformdb = TestUtil.getFreezeExe("transformdb")
 
 if TestUtil.appverifier:
     TestUtil.setAppVerifierSettings([transformdb])
@@ -77,7 +77,7 @@ for oldfile in files:
     if len(lines1) != len(lines2):
         print("failed! (1)")
         sys.exit(1)
-    
+
     i = 0
     while i < len(lines1):
         if sys.version_info[0] == 2:
@@ -98,7 +98,7 @@ print("ok")
 sys.stdout.write("creating test database... ")
 sys.stdout.flush()
 
-makedb = '"%s" "%s"'% (os.path.join(os.getcwd(), "makedb"), os.getcwd())
+makedb = os.path.join(os.getcwd(), TestUtil.getTestExecutable("makedb"))
 proc = TestUtil.spawn(makedb)
 proc.waitTestSuccess()
 print("ok")

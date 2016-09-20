@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -150,7 +150,7 @@ public final class RemoteEvictorI extends _RemoteEvictorDisp
     deactivate(Ice.Current current)
     {
         _evictorAdapter.destroy();
-        current.adapter.remove(current.adapter.getCommunicator().stringToIdentity(_category));
+        current.adapter.remove(Ice.Util.stringToIdentity(_category));
     }
 
     public void

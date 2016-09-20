@@ -1,10 +1,10 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
-class BookFactory implements Ice.ObjectFactory
+class BookFactory implements Ice.ValueFactory
 {
     @Override
     public Ice.Object
@@ -12,12 +12,6 @@ class BookFactory implements Ice.ObjectFactory
     {
         assert(type.equals("::Demo::Book"));
         return new BookI(_library);
-    }
-
-    @Override
-    public void
-    destroy()
-    {
     }
 
     BookFactory(LibraryI library)

@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -244,15 +244,15 @@ class RecordDescriptor : public ExecutableContainerDescriptor
 public:
 
     RecordDescriptor(const DescriptorPtr&, int, const DataFactoryPtr&, const ErrorReporterPtr&,
-                     const IceXML::Attributes&, const Slice::UnitPtr&, 
-                     const FreezeScript::ObjectFactoryPtr&);
+                     const IceXML::Attributes&, const Slice::UnitPtr&,
+                     const FreezeScript::ValueFactoryPtr&);
 
     virtual void execute(const SymbolTablePtr&, ExecuteInfo*);
 
 private:
 
     Slice::UnitPtr _unit;
-    FreezeScript::ObjectFactoryPtr _objectFactory;
+    FreezeScript::ValueFactoryPtr _valueFactory;
 };
 typedef IceUtil::Handle<RecordDescriptor> RecordDescriptorPtr;
 

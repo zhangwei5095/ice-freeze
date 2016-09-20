@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # **********************************************************************
 #
-# Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+# Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 #
 # **********************************************************************
 
@@ -11,21 +11,20 @@ path = [ ".", "..", "../..", "../../..", "../../../.." ]
 head = os.path.dirname(sys.argv[0])
 if len(head) > 0:
     path = [os.path.join(head, p) for p in path]
-path = [os.path.abspath(p) for p in path if os.path.exists(os.path.join(p, "scripts", "TestUtil.py")) ]
+path = [os.path.abspath(p) for p in path if os.path.exists(os.path.join(p, "scripts", "FreezeTestUtil.py")) ]
 if len(path) == 0:
     raise RuntimeError("can't find toplevel directory!")
 sys.path.append(os.path.join(path[0], "scripts"))
-import TestUtil
+import FreezeTestUtil as TestUtil
 
 sys.stdout.write("testing Freeze file lock... ")
 sys.stdout.flush()
 
-client = os.path.join(os.getcwd(), "client")
-
+client = os.path.join(os.getcwd(), TestUtil.getTestExecutable("client"))
 clientExe = TestUtil.startClient(client, "", None, None, False)
 clientExe.expect('File lock acquired.\.*')
 
-clientFail = os.path.join(os.getcwd(), "clientFail")
+clientFail = os.path.join(os.getcwd(), TestUtil.getTestExecutable("clientFail"))
 clientFailExe = TestUtil.startClient(clientFail, "", None, None, False)
 clientFailExe.expect('File lock not acquired')
 

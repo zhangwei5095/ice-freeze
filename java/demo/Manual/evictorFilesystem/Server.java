@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -21,9 +21,9 @@ public class Server extends Ice.Application
         //
         // Install object factories.
         //
-        Ice.ObjectFactory factory = new NodeFactory();
-        communicator().addObjectFactory(factory, PersistentFile.ice_staticId());
-        communicator().addObjectFactory(factory, PersistentDirectory.ice_staticId());
+        Ice.ValueFactory factory = new NodeFactory();
+        communicator().getValueFactoryManager().add(factory, PersistentFile.ice_staticId());
+        communicator().getValueFactoryManager().add(factory, PersistentDirectory.ice_staticId());
 
         //
         // Create an object adapter.

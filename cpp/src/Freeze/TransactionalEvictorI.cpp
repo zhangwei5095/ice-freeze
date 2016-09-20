@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -87,7 +87,7 @@ Freeze::TransactionalEvictorI::TransactionalEvictorI(const ObjectAdapterPtr& ada
         {
         }
 
-        virtual DispatchStatus dispatch(Request& request)
+        virtual bool dispatch(Request& request)
         {
             return _evictor->dispatch(request);
         }
@@ -165,7 +165,7 @@ Freeze::TransactionalEvictorI::addFacet(const ObjectPtr& servant, const Identity
     {
         AlreadyRegisteredException ex(__FILE__, __LINE__);
         ex.kindOfObject = "servant";
-        ex.id = _communicator->identityToString(ident);
+        ex.id = Ice::identityToString(ident);
         if(!facet.empty())
         {
             ex.id += " -f " + IceUtilInternal::escapeString(facet, "");
@@ -229,7 +229,7 @@ Freeze::TransactionalEvictorI::removeFacet(const Identity& ident, const string& 
     {
         NotRegisteredException ex(__FILE__, __LINE__);
         ex.kindOfObject = "servant";
-        ex.id = _communicator->identityToString(ident);
+        ex.id = Ice::identityToString(ident);
         if(!facet.empty())
         {
             ex.id += " -f " + IceUtilInternal::escapeString(facet, "");
@@ -240,7 +240,7 @@ Freeze::TransactionalEvictorI::removeFacet(const Identity& ident, const string& 
     if(_trace >= 1)
     {
         Trace out(_communicator->getLogger(), "Freeze.Evictor");
-        out << "removed object \"" << _communicator->identityToString(ident) << "\"";
+        out << "removed object \"" << Ice::identityToString(ident) << "\"";
         if(!facet.empty())
         {
             out << " with facet \"" << facet << "\"";
@@ -335,7 +335,7 @@ Freeze::TransactionalEvictorI::finished(const Current&, const ObjectPtr&, const 
     //
 }
 
-DispatchStatus
+bool
 Freeze::TransactionalEvictorI::dispatch(Request& request)
 {
     class CtxHolder
@@ -557,12 +557,9 @@ Freeze::TransactionalEvictorI::dispatch(Request& request)
 
                     try
                     {
-                        DispatchStatus dispatchStatus = sh.servant()->ice_dispatch(request, ctx);
-                        if(dispatchStatus == DispatchUserException && _rollbackOnUserException)
-                        {
-                            ctx->rollback();
-                        }
-                        if(dispatchStatus == DispatchAsync)
+                        bool dispatchAsync = sh.servant()->ice_dispatch(request, ctx);
+
+                        if(dispatchAsync)
                         {
                             //
                             // May throw DeadlockException or TransactionalEvictorDeadlockException
@@ -575,7 +572,15 @@ Freeze::TransactionalEvictorI::dispatch(Request& request)
                             }
                         }
 
-                        return dispatchStatus;
+                        return dispatchAsync;
+                    }
+                    catch(const Ice::UserException&)
+                    {
+                        if(_rollbackOnUserException)
+                        {
+                            ctx->rollback();
+                        }
+                        throw;
                     }
                     catch(...)
                     {
@@ -820,7 +825,7 @@ Freeze::TransactionalEvictorI::servantNotFound(const char* file, int line, const
     if(_trace >= 2)
     {
         Trace out(_communicator->getLogger(), "Freeze.Evictor");
-        out << "could not find \"" << _communicator->identityToString(current.id)
+        out << "could not find \"" << Ice::identityToString(current.id)
             << "\" with facet \"" <<  current.facet + "\"";
     }
 
@@ -856,6 +861,3 @@ Freeze::TransactionalEvictorElement::init(ObjectStore<TransactionalEvictorElemen
     _stale = false;
     _cachePosition = p;
 }
-
-
-

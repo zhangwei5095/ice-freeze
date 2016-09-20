@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -57,12 +57,11 @@ public:
     IceUtil::Mutex _mutex;
 };
 
-class NodeFactory : public Ice::ObjectFactory
+class NodeFactory : public Ice::ValueFactory
 {
 public:
 
     virtual Ice::ObjectPtr create(const std::string&);
-    virtual void destroy();
 };
 
 }

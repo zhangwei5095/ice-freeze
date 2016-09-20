@@ -1,10 +1,10 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
-class ContactFactory implements Ice.ObjectFactory
+class ContactFactory implements Ice.ValueFactory
 {
     @Override
     public Ice.Object
@@ -12,16 +12,6 @@ class ContactFactory implements Ice.ObjectFactory
     {
         assert(type.equals("::Demo::Contact"));
         return new ContactI(this);
-    }
-
-    @Override
-    public void
-    destroy()
-    {
-    }
-
-    ContactFactory()
-    {
     }
 
     void

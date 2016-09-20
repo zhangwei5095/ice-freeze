@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -23,7 +23,7 @@ FreezeScript::FailureException::~FailureException() throw()
 const char* FreezeScript::FailureException::_name = "FreezeScript::FailureException";
 
 string
-FreezeScript::FailureException::ice_name() const
+FreezeScript::FailureException::ice_id() const
 {
     return _name;
 }

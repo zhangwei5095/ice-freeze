@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -43,7 +43,7 @@ main(int argc, char* argv[])
 }
 
 template<class T>
-class ObjectFactory : public Ice::ObjectFactory
+class ValueFactory : public Ice::ValueFactory
 {
 public:
 
@@ -51,11 +51,6 @@ public:
     create(const string& /*type*/)
     {
         return new T;
-    }
-
-    virtual void
-    destroy()
-    {
     }
 };
 
@@ -90,9 +85,12 @@ CasinoServer::run(int argc, char*[])
     //
     // Register factories
     //
-    communicator()->addObjectFactory(new ObjectFactory<BankI>, CasinoStore::PersistentBank::ice_staticId());
-    communicator()->addObjectFactory(new ObjectFactory<PlayerI>, CasinoStore::PersistentPlayer::ice_staticId());
-    communicator()->addObjectFactory(new ObjectFactory<BetI>, CasinoStore::PersistentBet::ice_staticId());
+    communicator()->getValueFactoryManager()->add(new ValueFactory<BankI>,
+                                                  CasinoStore::PersistentBank::ice_staticId());
+    communicator()->getValueFactoryManager()->add(new ValueFactory<PlayerI>,
+                                                  CasinoStore::PersistentPlayer::ice_staticId());
+    communicator()->getValueFactoryManager()->add(new ValueFactory<BetI>,
+                                                  CasinoStore::PersistentBet::ice_staticId());
 
     //
     // Create evictors; each type gets its own type-specific evictor
@@ -236,7 +234,7 @@ CasinoServer::run(int argc, char*[])
         // Retrieve / create the bank
         //
 
-        Ice::Identity bankId = communicator()->stringToIdentity("bank/Montecito");
+        Ice::Identity bankId = Ice::stringToIdentity("bank/Montecito");
         _bankPrx = CasinoStore::PersistentBankPrx::uncheckedCast(adapter->createProxy(bankId));
 
         if(!_bankEvictor->hasObject(bankId))

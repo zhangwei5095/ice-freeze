@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -85,7 +85,7 @@ public:
 
     virtual TransactionIPtr beforeQuery();
 
-    Ice::DispatchStatus dispatch(Ice::Request&);
+    bool dispatch(Ice::Request&);
 
     Ice::ObjectPtr evict(const Ice::Identity&, ObjectStore<TransactionalEvictorElement>*);
 

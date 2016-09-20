@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -13,6 +13,7 @@
 #include <Freeze/Catalog.h>
 #include <IceUtil/Options.h>
 #include <IceUtil/FileUtil.h>
+#include <fstream>
 #include <db_cxx.h>
 #include <sys/stat.h>
 #include <algorithm>
@@ -114,7 +115,7 @@ findType(const Slice::UnitPtr& u, const string& type)
 
 static void
 transformDb(bool evictor,  const Ice::CommunicatorPtr& communicator,
-            const FreezeScript::ObjectFactoryPtr& objectFactory,
+            const FreezeScript::ValueFactoryPtr& valueFactory,
             DbEnv& dbEnv, DbEnv& dbEnvNew, const string& dbName,
             const Freeze::ConnectionPtr& connectionNew, vector<Db*>& dbs,
             const Slice::UnitPtr& oldUnit, const Slice::UnitPtr& newUnit,
@@ -174,7 +175,7 @@ transformDb(bool evictor,  const Ice::CommunicatorPtr& communicator,
             //
             istringstream istr(descriptors);
             string facet = (name == "$default" ? string("") : name);
-            FreezeScript::transformDatabase(communicator, objectFactory, oldUnit, newUnit, &db, dbNew, txnNew, 0,
+            FreezeScript::transformDatabase(communicator, valueFactory, oldUnit, newUnit, &db, dbNew, txnNew, 0,
                                             dbName, facet, purgeObjects, cerr, suppress, istr);
 
             db.close(0);
@@ -200,7 +201,7 @@ transformDb(bool evictor,  const Ice::CommunicatorPtr& communicator,
         // Execute the transformation descriptors.
         //
         istringstream istr(descriptors);
-        FreezeScript::transformDatabase(communicator, objectFactory, oldUnit, newUnit, &db, dbNew, txnNew,
+        FreezeScript::transformDatabase(communicator, valueFactory, oldUnit, newUnit, &db, dbNew, txnNew,
                                         connectionNew, dbName, "", purgeObjects, cerr, suppress, istr);
 
         db.close(0);
@@ -721,7 +722,7 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
 
         if(!outputFile.empty())
         {
-            IceUtilInternal::ofstream of(outputFile);
+            ofstream of(IceUtilInternal::streamFilename(outputFile).c_str());
             if(!of.good())
             {
                 cerr << appName << ": unable to open file `" << outputFile << "'" << endl;
@@ -737,7 +738,7 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
         //
         // Read the input file.
         //
-        IceUtilInternal::ifstream in(inputFile);
+        ifstream in(IceUtilInternal::streamFilename(inputFile).c_str());
         char buff[1024];
         while(true)
         {
@@ -757,8 +758,8 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
         return EXIT_FAILURE;
     }
 
-    FreezeScript::ObjectFactoryPtr objectFactory = new FreezeScript::ObjectFactory;
-    communicator->addObjectFactory(objectFactory, "");
+    FreezeScript::ValueFactoryPtr valueFactory = new FreezeScript::ValueFactory;
+    communicator->getValueFactoryManager()->add(valueFactory, "");
 
     //
     // Transform the database.
@@ -830,13 +831,13 @@ run(const Ice::StringSeq& originalArgs, const Ice::CommunicatorPtr& communicator
             //
             for(FreezeScript::CatalogDataMap::iterator p = catalog.begin(); p != catalog.end(); ++p)
             {
-                transformDb(p->second.evictor, communicator, objectFactory, dbEnv, dbEnvNew, p->first, connectionNew,
+                transformDb(p->second.evictor, communicator, valueFactory, dbEnv, dbEnvNew, p->first, connectionNew,
                             dbs, oldUnit, newUnit, txnNew, purgeObjects, suppress, descriptors);
             }
         }
         else
         {
-            transformDb(evictor, communicator, objectFactory, dbEnv, dbEnvNew, dbName, connectionNew, dbs,
+            transformDb(evictor, communicator, valueFactory, dbEnv, dbEnvNew, dbName, connectionNew, dbs,
                         oldUnit, newUnit, txnNew, purgeObjects, suppress, descriptors);
         }
     }

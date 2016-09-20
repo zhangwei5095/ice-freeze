@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -11,8 +11,8 @@
 #include <Freeze/TransactionHolder.h>
 #include <Freeze/Catalog.h>
 #include <Freeze/CatalogIndexList.h>
-#include <IceUtil/UUID.h>
-#include <IceUtil/StringConverter.h>
+#include <Ice/UUID.h>
+#include <Ice/StringConverter.h>
 #include <stdlib.h>
 
 using namespace std;
@@ -179,7 +179,7 @@ Freeze::MapHelper::recreate(const Freeze::ConnectionPtr& connection,
                 //
                 // Rename existing database
                 //
-                string oldDbName = dbName + ".old-" + IceUtil::generateUUID();
+                string oldDbName = dbName + ".old-" + generateUUID();
 
                 if(connectionI->trace() >= 2)
                 {
@@ -197,7 +197,7 @@ Freeze::MapHelper::recreate(const Freeze::ConnectionPtr& connection,
                 //
                 // Berkeley DB expects file paths to be UTF8 encoded.
                 //
-                oldDb.open(txn, IceUtil::nativeToUTF8(oldDbName, IceUtil::getProcessStringConverter()).c_str(),
+                oldDb.open(txn, nativeToUTF8(oldDbName, getProcessStringConverter()).c_str(),
                            0, DB_BTREE, DB_THREAD, FREEZE_DB_MODE);
 
                 IceUtil::UniquePtr<MapDb> newDb(new MapDb(connectionI, dbName, key, value, keyCompare, indices, true));
@@ -336,7 +336,7 @@ Freeze::IteratorHelper::~IteratorHelper() ICE_NOEXCEPT_FALSE
 // MapCodecBase (from Map.h)
 //
 Freeze::MapCodecBase::MapCodecBase(const Ice::CommunicatorPtr& communicator, const Ice::EncodingVersion& encoding) :
-    _stream(IceInternal::getInstance(communicator).get(), encoding),
+    _stream(communicator, encoding),
     _dbt(0)
 {
 }
@@ -383,7 +383,7 @@ Freeze::IteratorHelperI::IteratorHelperI(const MapHelperI& m, bool readOnly,
         //
         // Need to start a transaction
         //
-#ifdef ICE_CPP11
+#ifdef ICE_CPP11_COMPILER
         _tx.reset(new Tx(_map));
 #else
         _tx = new Tx(_map);
@@ -939,7 +939,7 @@ Freeze::IteratorHelperI::cleanup()
 
     // this can raise an exception when committing the transaction
     // (only for read/write iterators)
-#ifdef ICE_CPP11
+#ifdef ICE_CPP11_COMPILER
     _tx.reset();
 #else
     _tx = 0;
@@ -1474,7 +1474,7 @@ Freeze::MapHelperI::clear()
                 IteratorHelperI::TxPtr tx;
                 if(txn == 0)
                 {
-#ifdef ICE_CPP11
+#ifdef ICE_CPP11_COMPILER
                     tx.reset(new IteratorHelperI::Tx(*this));
 #else
                     tx = new IteratorHelperI::Tx(*this);
@@ -1852,7 +1852,7 @@ Freeze::MapIndexI::MapIndexI(const ConnectionIPtr& connection, MapDb& db,
     //
     // Berkeley DB expects file paths to be UTF8 encoded.
     //
-    _db->open(txn, IceUtil::nativeToUTF8(_dbName, IceUtil::getProcessStringConverter()).c_str(), 0, DB_BTREE, flags,
+    _db->open(txn, nativeToUTF8(_dbName, getProcessStringConverter()).c_str(), 0, DB_BTREE, flags,
               FREEZE_DB_MODE);
 
     //

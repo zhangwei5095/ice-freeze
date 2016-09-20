@@ -1,6 +1,6 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2015 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2016 ZeroC, Inc. All rights reserved.
 //
 // **********************************************************************
 
@@ -395,7 +395,7 @@ public abstract class Index<K, V, I>
 
     ByteBuffer encodeKey(I k)
     {
-        IceInternal.BasicStream str = _map.createWriteStream();
+        Ice.OutputStream str = _map.createWriteStream();
         encodeKey(k, str);
         return str.prepareWrite().b;
     }
